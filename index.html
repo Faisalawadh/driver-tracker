@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>مواقع السائقين</title>
+  <meta charset="utf-8">
+  <style>
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    async function initMap() {
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 10,
+        center: { lat: 29.3759, lng: 47.9774 }
+      });
+
+      const sheetId = "1nOvSY9PMMgDlrad0CRXkpGhB_LqgveYHOKF7SrFfYpU";
+      const sheetGid = "229101576";
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&gid=${sheetGid}`;
+
+      try {
+        const response = await fetch(url);
+        const text = await response.text();
+        const json = JSON.parse(text.substr(47).slice(0, -2));
+        const rows = json.table.rows;
+
+        rows.forEach(row => {
+          const name = row.c[0]?.v || "بدون اسم";
+          const username = row.c[1]?.v || "";
+          const time = row.c[2]?.v || "";
+          const lat = parseFloat(row.c[3]?.v);
+          const lng = parseFloat(row.c[4]?.v);
+
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const marker = new google.maps.Marker({
+              position: { lat: lat, lng: lng },
+              map: map,
+              title: name
+            });
+
+            const infowindow = new google.maps.InfoWindow({
+              content: `<div><strong>${name}</strong><br>اليوزر: ${username}<br>الوقت: ${time}</div>`
+            });
+
+            marker.addListener("click", () => {
+              infowindow.open(map, marker);
+            });
+          }
+        });
+      } catch (error) {
+        alert("حدث خطأ أثناء تحميل البيانات من Google Sheets");
+        console.error(error);
+      }
+    }
+  </script>
+
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBezv5ZQM1osMg7n5VESeOCE7WxkWHIewc&callback=initMap">
+  </script>
+</body>
+</html>
